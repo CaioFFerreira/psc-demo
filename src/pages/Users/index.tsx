@@ -22,6 +22,8 @@ import {
   Row,
   Col,
   Switch,
+  Pagination,
+  PaginationProps,
 } from "antd";
 import {
   DeleteOutlined,
@@ -44,7 +46,10 @@ const Users = () => {
   const [loadingDelete, setLoadingDelete] = React.useState(false);
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [data, setData] = React.useState([]);
+  const [data, setData] = React.useState<{ data: any; count: number }>({
+    data: [],
+    count: 0,
+  });
   const [filterName, setFilterName] = React.useState("");
   const [user, setUser] = React.useState<any>({});
   const [formModal, setFormModal] = React.useState<any>({
@@ -60,6 +65,9 @@ const Users = () => {
   const [form] = Form.useForm();
 
   const [mode, setMode] = React.useState("");
+
+  const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(20);
 
   const columns: any = [
     {
@@ -213,23 +221,19 @@ const Users = () => {
           });
         })
         .catch(({ response }) => {
-          if (response.data?.errors[0] === "E-mail já cadastrado") {
-            openNotificationWithIcon({
-              type: "error",
-              title: "Erro ao criar usuário",
-              description: "O e-mail informado já está cadastrado!",
-            });
+          const {
+            data: { data },
+          } = response;
 
-            return;
-          }
           openNotificationWithIcon({
             type: "error",
             title: "Erro ao criar usuário",
-            description: "Ocorreu um erro ao criar o usuário, tente novamente!",
+            description:
+              data || "Ocorreu um erro ao criar o usuário, tente novamente!",
           });
         })
         .finally(() => {
-          getUsers("");
+          getUsers("", 1, 20);
           setLoadingUser(false);
         });
     }
@@ -254,24 +258,20 @@ const Users = () => {
             description: "O usuário foi editado com sucesso!",
           });
         })
-        .catch((err) => {
-          if (err.response.data.statusCode === "409") {
-            openNotificationWithIcon({
-              type: "error",
-              title: "Erro ao editar usuário",
-              description: "O e-mail informado já está cadastrado!",
-            });
-            return;
-          }
+        .catch(({ response }) => {
+          const {
+            data: { data },
+          } = response;
+
           openNotificationWithIcon({
             type: "error",
             title: "Erro ao editar usuário",
             description:
-              "Ocorreu um erro ao editar o usuário, tente novamente!",
+              data || "Ocorreu um erro ao editar o usuário, tente novamente!",
           });
         })
         .finally(() => {
-          getUsers("");
+          getUsers("", 1, 20);
           setLoadingUser(false);
         });
     }
@@ -297,16 +297,25 @@ const Users = () => {
       })
       .finally(() => {
         setLoadingDelete(false);
-        getUsers("");
+        getUsers("", 1, 20);
       });
   };
 
-  const getUsers = (filterName: string) => {
+  const getUsers = (
+    filterName: string,
+    filterPage: any,
+    filterPageSize: any
+  ) => {
     setLoading(true);
     api
-      .get(`/price/user?nome=${filterName}`)
+      .get(
+        `/price/user?nome=${filterName}&Page=${filterPage}&PageSize=${filterPageSize}`
+      )
       .then((response) => {
-        setData(response.data);
+        const {
+          data: { data },
+        } = response;
+        setData(data);
       })
       .catch(() => {
         openNotificationWithIcon({
@@ -321,12 +330,18 @@ const Users = () => {
   };
 
   React.useEffect(() => {
-    getUsers(filterName);
+    getUsers(filterName, page, pageSize);
   }, []);
 
   const clearFilters = () => {
     setFilterName("");
-    getUsers("");
+    getUsers("", 1, 20);
+  };
+
+  const onChangePage = (pageCurrent: any, pageSizeCurrent: any) => {
+    setPageSize(pageSizeCurrent);
+    setPage(pageCurrent);
+    getUsers(filterName, pageCurrent, pageSizeCurrent);
   };
 
   return (
@@ -354,7 +369,7 @@ const Users = () => {
         </Label>
 
         <Tooltip title="Buscar">
-          <Button type="primary" onClick={() => getUsers(filterName)}>
+          <Button type="primary" onClick={() => getUsers(filterName, 1, 20)}>
             <SearchOutlined />
           </Button>
         </Tooltip>
@@ -367,9 +382,19 @@ const Users = () => {
       <Table
         locale={{ emptyText: "Sem usuários" }}
         columns={columns}
-        dataSource={data}
+        dataSource={data?.data}
         loading={loading}
         rowKey="usuarioId"
+        pagination={false}
+      />
+
+      <Pagination
+        showSizeChanger
+        total={data?.count}
+        current={page}
+        pageSize={pageSize}
+        onChange={onChangePage}
+        locale={{ items_per_page: "- Itens por página" }}
       />
 
       <Modal open={isModalOpen} footer={null} onCancel={handleCancel}>

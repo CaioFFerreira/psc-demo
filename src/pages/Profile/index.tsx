@@ -65,7 +65,11 @@ const Profile = ({ open, setOpen }: any) => {
       setLoadingGetUser(true);
       api
         .get(`/price/user/${data?.userId}`)
-        .then(({ data }) => {
+        .then((response) => {
+          const {
+            data: { data },
+          } = response;
+
           setUser(data);
           form.setFieldsValue({
             username: data.nome,

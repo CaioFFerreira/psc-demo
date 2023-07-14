@@ -67,10 +67,14 @@ const MyOrders = () => {
         page: filters.page,
         pageSize: filters.pageSize,
       })
-      .then(({ data }) => {
+      .then((response) => {
+        const {
+          data: { data },
+        } = response;
+
         setData(data);
       })
-      .catch((err) => {
+      .catch(() => {
         openNotificationWithIcon({
           type: "error",
           title: "Erro ao exibir pedidos!",

@@ -37,10 +37,11 @@ const Status = () => {
     setLoading(true);
     api
       .get(`/price/preorder/${id}`)
-      .then((res) => {
-        setOrder(res.data);
+      .then(({ data }) => {
+        const { data: response } = data;
+        setOrder(response);
       })
-      .catch((err) => {
+      .catch(() => {
         openNotificationWithIcon({
           type: "error",
           title: "Erro ao exibir status do pedido!",
@@ -61,14 +62,19 @@ const Status = () => {
         notes: observation,
         preOrderId: order?.preOrderId,
       })
-      .then((e) => {
+      .then(() => {
         getOrderStatus();
       })
-      .catch((err) => {
+      .catch(({ response }) => {
+        const {
+          data: { data },
+        } = response;
+
         openNotificationWithIcon({
           type: "error",
           title: "Erro ao adicionar nota!",
-          description: "Ocorreu um erro ao adicionar nota, tente novamente.",
+          description:
+            data || "Ocorreu um erro ao adicionar nota, tente novamente.",
         });
       })
       .finally(() => {

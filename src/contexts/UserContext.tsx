@@ -43,9 +43,11 @@ export const UserStorage = ({ children }: any) => {
         username,
         password,
       })
-      .then((res) => {
-        window.localStorage.setItem("user", JSON.stringify(res.data));
-        setData(res.data);
+      .then(({ data }) => {
+        const { data: response } = data;
+
+        window.localStorage.setItem("user", JSON.stringify(response));
+        setData(response);
         setLogin(true);
         navigate("/my-orders");
       })
